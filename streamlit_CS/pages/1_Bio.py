@@ -14,7 +14,7 @@ FUN_FACTS = [
     "I currently have 6 pets.",
     "My favorite color is blue.",
 ]
-PHOTO_PATH = "assets/your_photo.jpg"  # Put a file in repo root or set a URL
+PHOTO_PATH = "streamlit_CS/assets/your_photo.jpg"  # Put a file in repo root or set a URL
 
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")
