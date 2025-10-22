@@ -23,6 +23,8 @@ st.markdown(
 st.title("📡 Simple Live Data Demo (CoinGecko)")
 st.caption("Friendly demo with manual refresh + fallback data so it never crashes.")
 
+
+
 # 2) Config
 COINS = ["bitcoin", "ethereum"]
 VS = "usd"
@@ -35,6 +37,8 @@ API_URL = build_url(COINS)
 
 # Tiny sample to keep the demo working even if the API is rate-limiting
 SAMPLE_DF = pd.DataFrame([{"coin": "bitcoin", VS: 68000}, {"coin": "ethereum", VS: 3500}])
+
+
 
 # 3) FETCH (CACHED)
 @st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes
@@ -59,11 +63,15 @@ def fetch_prices(url: str):
     except requests.RequestException as e:
         return None, f"Network/HTTP error: {e}"
 
+
+
 # 4) REFRESH BUTTON / AUTO REFRESH CONTROLS
 st.subheader("🔁 Auto Refresh Settings")
 refresh_sec = st.slider("Refresh every (sec)", min_value=10, max_value=120, value=30)
 auto_refresh = st.toggle("Enable auto-refresh", value=False)
 st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
+
+
 
 # 5) MAIN VIEW
 st.subheader("Prices")
