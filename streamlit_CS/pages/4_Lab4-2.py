@@ -6,15 +6,19 @@ import plotly.express as px
 import time
 
 st.set_page_config(page_title="Live API Demo (Simple)", page_icon="📡", layout="wide")
+
 # Disable fade/transition so charts don't blink between reruns
-st.markdown("""
+st.markdown(
+    """
     <style>
       [data-testid="stPlotlyChart"], .stPlotlyChart, .stElementContainer {
         transition: none !important;
         opacity: 1 !important;
       }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
 st.title("📡 Simple Live Data Demo (CoinGecko)")
 st.caption("Friendly demo with manual refresh + fallback data so it never crashes.")
@@ -30,13 +34,10 @@ def build_url(ids):
 API_URL = build_url(COINS)
 
 # Tiny sample to keep the demo working even if the API is rate-limiting
-SAMPLE_DF = pd.DataFrame(
-    [{"coin": "bitcoin", VS: 68000}, {"coin": "ethereum", VS: 3500}]
-)
+SAMPLE_DF = pd.DataFrame([{"coin": "bitcoin", VS: 68000}, {"coin": "ethereum", VS: 3500}])
 
 # 3) FETCH (CACHED)
-@st.cache_data(ttl=300, show_spinner=False)   # Cache for 5 minutes
-
+@st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes
 def fetch_prices(url: str):
     """Return (df, error_message). Never raise. Safe for beginners."""
     try:
@@ -47,22 +48,21 @@ def fetch_prices(url: str):
             return None, f"429 Too Many Requests — try again after {retry_after}s"
         resp.raise_for_status()
         data = resp.json()
-        df = pd.DataFrame(data).T.reset_index().rename(columns={"index": "coin"})
+        if not isinstance(data, dict) or not data:
+            return None, "Empty/invalid response from API."
+        df = (
+            pd.DataFrame(data)
+            .T.reset_index()
+            .rename(columns={"index": "coin"})
+        )
         return df, None
     except requests.RequestException as e:
         return None, f"Network/HTTP error: {e}"
 
-  # 4) REFRESH BUTTON
-  # --- Auto Refresh Controls ---
+# 4) REFRESH BUTTON / AUTO REFRESH CONTROLS
 st.subheader("🔁 Auto Refresh Settings")
-
-# Let user choose how often to refresh (in seconds)
-refresh_sec = st.slider("Refresh every (sec)", 10, 120, 30)
-
-# Toggle to turn automatic refreshing on/off
+refresh_sec = st.slider("Refresh every (sec)", min_value=10, max_value=120, value=30)
 auto_refresh = st.toggle("Enable auto-refresh", value=False)
-
-# Show current refresh time
 st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
 
 # 5) MAIN VIEW
@@ -73,7 +73,10 @@ if err:
     st.warning(f"{err}\nShowing sample data so the demo continues.")
     df = SAMPLE_DF.copy()
 
-st.dataframe(df, use_container_width=True)
+# Ensure numeric values
+df[VS] = pd.to_numeric(df[VS], errors="coerce")
+
+st.dataframe(df, use_container_width=True, hide_index=True)
 
 fig = px.bar(df, x="coin", y=VS, title=f"Current price ({VS.upper()})")
 st.plotly_chart(fig, use_container_width=True)
@@ -81,5 +84,5 @@ st.plotly_chart(fig, use_container_width=True)
 # If auto-refresh is ON, wait and rerun the app
 if auto_refresh:
     time.sleep(refresh_sec)
-  fetch_prices.clear()
+    fetch_prices.clear()  # clear cache so we actually refetch
     st.rerun()
