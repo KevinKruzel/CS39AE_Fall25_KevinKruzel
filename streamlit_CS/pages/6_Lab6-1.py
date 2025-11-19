@@ -27,18 +27,53 @@ data = [
     ("Bob", "Jack"),
 ]
 
+# --- Build graph ---
 G = nx.Graph()
 G.add_edges_from(data)
 
 st.subheader("Graph Visualization")
 
+# --- Draw graph ---
 fig, ax = plt.subplots(figsize=(6, 4))
-pos = nx.spring_layout(G, seed=42)
+pos = nx.spring_layout(G, seed=42)  # Force-directed layout (fixed seed for consistency)
 nx.draw(
     G,
     pos,
     with_labels=True,
     node_color="lightgreen",
     edge_color="gray",
-    node_s_
+    node_size=800,
+    font_size=10,
+    ax=ax,
+)
+st.pyplot(fig)
+
+# --- Centrality measures ---
+st.subheader("Centrality Measures")
+
+degree_centrality = nx.degree_centrality(G)
+betweenness_centrality = nx.betweenness_centrality(G, weight="weight")
+closeness_centrality = nx.closeness_centrality(G)
+eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
+
+# Put all into a DataFrame for nicer display
+centrality_df = pd.DataFrame({
+    "Degree": degree_centrality,
+    "Betweenness": betweenness_centrality,
+    "Closeness": closeness_centrality,
+    "Eigenvector": eigenvector_centrality,
+})
+
+centrality_df = centrality_df.round(3)
+centrality_df.index.name = "Node"
+
+st.dataframe(centrality_df)
+
+# --- Communities ---
+st.subheader("Communities (Greedy Modularity)")
+
+communities = greedy_modularity_communities(G)
+
+for i, community in enumerate(communities, 1):
+    st.write(f"**Community {i}:** {', '.join(sorted(community))}")
 
