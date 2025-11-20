@@ -82,7 +82,7 @@ with col1_r1:
     st.subheader("Graph Visualization (Communities + Most Influential Highlighted)")
 
     st.markdown(
-        f"**Most influential person (for spreading information, via betweenness centrality): {most_influential} (score = {most_influential_score:.3f})"
+        f"Most influential person (for spreading information, via betweenness centrality): {most_influential} (score = {most_influential_score:.3f})"
     )
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -110,3 +110,9 @@ with col2_r1:
 st.subheader("Communities (Greedy Modularity)")
 for i, community in enumerate(communities, 1):
     st.write(f"**Community {i}:** {', '.join(sorted(community))}")
+
+# ───────────────────────────
+# Conclusion
+# ───────────────────────────
+st.subheader("Random Forest Settings")
+
