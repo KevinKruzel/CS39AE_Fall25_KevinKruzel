@@ -27,49 +27,64 @@ data = [
     ("Bob", "Jack"),
 ]
 
+# --- Build graph ONCE ---
+G = nx.Graph()
+G.add_edges_from(data)
+
+# --- Layout (computed once) ---
+pos = nx.spring_layout(G, seed=42)
+
+# --- Communities ---
+communities = greedy_modularity_communities(G)
+palette = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
+
+node_to_comm = {}
+for c_index, comm in enumerate(communities):
+    for node in comm:
+        node_to_comm[node] = c_index
+
+# Base colors: by community
+community_colors = [palette[node_to_comm[n] % len(palette)] for n in G.nodes()]
+
+# --- Centrality measures (computed before columns) ---
+degree_centrality = nx.degree_centrality(G)
+betweenness_centrality = nx.betweenness_centrality(G, weight="weight")
+closeness_centrality = nx.closeness_centrality(G)
+eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
+
+centrality_df = pd.DataFrame({
+    "Degree": degree_centrality,
+    "Betweenness": betweenness_centrality,
+    "Closeness": closeness_centrality,
+    "Eigenvector": eigenvector_centrality,
+})
+centrality_df = centrality_df.round(3)
+centrality_df.index.name = "Node"
+
+# --- Identify most influential node (by betweenness) ---
+most_influential = max(betweenness_centrality, key=betweenness_centrality.get)
+most_influential_score = betweenness_centrality[most_influential]
+
+# Build final node color list: highlight most influential in yellow
+node_colors = []
+for node, base_color in zip(G.nodes(), community_colors):
+    if node == most_influential:
+        node_colors.append("yellow")  # highlight color
+    else:
+        node_colors.append(base_color)
+
 # ───────────────────────────
-# ROW 1
+# ROW 1: Graph (left) and table (right)
 # ───────────────────────────
 col1_r1, col2_r1 = st.columns([1, 1])
+
 with col1_r1:
-    # --- Build graph ---
-    G = nx.Graph()
-    G.add_edges_from(data)
-
-    # --- Layout (computed once) ---
-    pos = nx.spring_layout(G, seed=42)
-
-    # --- Communities ---
-    communities = greedy_modularity_communities(G)
-
-    palette = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
-    node_to_comm = {}
-    for c_index, comm in enumerate(communities):
-        for node in comm:
-            node_to_comm[node] = c_index
-
-    # Base colors: by community
-    community_colors = [palette[node_to_comm[n] % len(palette)] for n in G.nodes()]
-
-    # --- Identify most influential node (by betweenness) ---
-    most_influential = max(betweenness_centrality, key=betweenness_centrality.get)
-    most_influential_score = betweenness_centrality[most_influential]
+    st.subheader("Graph Visualization (Communities + Most Influential Highlighted)")
 
     st.markdown(
         f"**Most influential person (for spreading information, via betweenness centrality):** "
         f":star2: `{most_influential}` (score = {most_influential_score:.3f})"
     )
-
-    # Build final node color list: highlight most influential in yellow
-    node_colors = []
-    for node, base_color in zip(G.nodes(), community_colors):
-        if node == most_influential:
-            node_colors.append("yellow")  # highlight color
-        else:
-            node_colors.append(base_color)
-
-    # --- Graph visualization ---
-    st.subheader("Graph Visualization (Communities + Most Influential Highlighted)")
 
     fig, ax = plt.subplots(figsize=(8, 6))
     nx.draw(
@@ -86,28 +101,13 @@ with col1_r1:
     ax.set_title("Network Colored by Community\n(Most Influential in Yellow)")
     st.pyplot(fig)
 
-    # --- Communities text output ---
-    st.subheader("Communities (Greedy Modularity)")
-
-    for i, community in enumerate(communities, 1):
-        st.write(f"**Community {i}:** {', '.join(sorted(community))}")
-        
 with col2_r1:
-    # --- Centrality measures ---
-        st.subheader("Centrality Measures")
+    st.subheader("Centrality Measures")
+    st.dataframe(centrality_df)
 
-        degree_centrality = nx.degree_centrality(G)
-        betweenness_centrality = nx.betweenness_centrality(G, weight="weight")
-        closeness_centrality = nx.closeness_centrality(G)
-        eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
-
-        centrality_df = pd.DataFrame({
-            "Degree": degree_centrality,
-            "Betweenness": betweenness_centrality,
-            "Closeness": closeness_centrality,
-            "Eigenvector": eigenvector_centrality,
-        })
-        centrality_df = centrality_df.round(3)
-        centrality_df.index.name = "Node"
-
-        st.dataframe(centrality_df)
+# ───────────────────────────
+# Communities listed below
+# ───────────────────────────
+st.subheader("Communities (Greedy Modularity)")
+for i, community in enumerate(communities, 1):
+    st.write(f"**Community {i}:** {', '.join(sorted(community))}")
