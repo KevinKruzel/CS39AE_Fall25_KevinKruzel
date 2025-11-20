@@ -114,5 +114,6 @@ for i, community in enumerate(communities, 1):
 # ───────────────────────────
 # Conclusion
 # ───────────────────────────
-st.subheader("Random Forest Settings")
+st.subheader("Most Influential Person - Bob")
+st.write("It is clear that Bob is the the most influential person in this group. He has the highest scores of centrality in each category. When looking at the visualization, this is made clear by the fact that he is the only individual to be connected to the other two communities he is not a part of.")
 
