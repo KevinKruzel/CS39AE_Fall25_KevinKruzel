@@ -31,21 +31,39 @@ data = [
 G = nx.Graph()
 G.add_edges_from(data)
 
-st.subheader("Graph Visualization")
+# --- Compute layout once ---
+pos = nx.spring_layout(G, seed=42)  # Force-directed layout (fixed seed)
 
-# --- Draw graph ---
-fig, ax = plt.subplots(figsize=(6, 4))
-pos = nx.spring_layout(G, seed=42)  # Force-directed layout (fixed seed for consistency)
+# --- Communities ---
+communities = greedy_modularity_communities(G)
+
+# Assign a unique color to each community
+palette = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
+node_to_comm = {}
+
+for c_index, comm in enumerate(communities):
+    for node in comm:
+        node_to_comm[node] = c_index
+
+# Build list of colors for drawing (wrap around palette if > len(palette) communities)
+community_colors = [palette[node_to_comm[n] % len(palette)] for n in G.nodes()]
+
+# --- Graph visualization ---
+st.subheader("Graph Visualization (Colored by Community)")
+
+fig, ax = plt.subplots(figsize=(8, 6))
 nx.draw(
     G,
     pos,
     with_labels=True,
-    node_color="lightgreen",
+    node_size=3000,
+    node_color=community_colors,
     edge_color="gray",
-    node_size=800,
     font_size=10,
+    font_weight="bold",
     ax=ax,
 )
+ax.set_title("Network Colored by Community")
 st.pyplot(fig)
 
 # --- Centrality measures ---
@@ -69,11 +87,8 @@ centrality_df.index.name = "Node"
 
 st.dataframe(centrality_df)
 
-# --- Communities ---
+# --- Communities text output ---
 st.subheader("Communities (Greedy Modularity)")
-
-communities = greedy_modularity_communities(G)
 
 for i, community in enumerate(communities, 1):
     st.write(f"**Community {i}:** {', '.join(sorted(community))}")
-
