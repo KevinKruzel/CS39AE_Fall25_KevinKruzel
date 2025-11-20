@@ -32,7 +32,7 @@ G = nx.Graph()
 G.add_edges_from(data)
 
 # --- Compute layout once ---
-pos = nx.spring_layout(G, seed=42)  # Force-directed layout (fixed seed)
+pos = nx.spring_layout(G)
 
 # --- Communities ---
 communities = greedy_modularity_communities(G)
