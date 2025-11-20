@@ -81,10 +81,6 @@ col1_r1, col2_r1 = st.columns([1, 1])
 with col1_r1:
     st.subheader("Graph Visualization (Communities + Most Influential Highlighted)")
 
-    st.markdown(
-        f"Most influential person (for spreading information, via betweenness centrality): {most_influential} (score = {most_influential_score:.3f})"
-    )
-
     fig, ax = plt.subplots(figsize=(8, 6))
     nx.draw(
         G,
